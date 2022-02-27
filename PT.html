@@ -1,0 +1,209 @@
+<body style="background-color:black;">
+<div class="DisplayBg" style = "position:absolute;left:500;top:10; background-color:white; border:0px solid white; border-radius:55px"><div class="bg"></div> </div>
+<canvas id="can" width="524" height="900" style="border:3px solid #000000; position:absolute;left:500;top:10;" ></canvas>
+</body>
+<style>
+*{
+	padding:0;
+	margin:0;
+	overflow-x: hidden;
+}
+
+.Displaybg{
+	width:510px;
+	height:901px;
+	border: 1px solid black;
+	margin: auto;
+}
+
+.bg{
+    background-image: url(https://images2.pixlis.com/background-image-vertical-lines-and-stripes-seamless-tileable-black-white-22rsqm.png);
+	width:90%;  
+	height:100%;
+	position: relative;
+	top: 0%;
+	left:-1%;
+}
+</style>
+
+<script>
+
+var can= document.getElementById("can"),
+    ctx = can.getContext("2d")
+NumberOfTiles = 0;
+x = 0;
+arryGen =[];
+arryCheck =[];
+var missNum; 
+
+
+var A = new Audio("Audio/A.wav");
+var A1 = new Audio("Audio/A+.wav");
+var A2 = new Audio("Audio/A+.wav");
+var C1 = new Audio("Audio/C.wav");
+var C2 = new Audio("Audio/C.wav");
+var C3 = new Audio("Audio/C+.wav");
+var D = new Audio("Audio/D.wav");
+var E = new Audio("Audio/E.wav");
+var F = new Audio("Audio/F.wav");
+var F1 = new Audio("Audio/F.wav");
+var G = new Audio("Audio/G.wav");
+
+PlaySound = [C1,C2,D,C2,F,E,C1,C2,D,C2,G,F,C1,C2,C3,A,F,E,D,A1,A2,A,F,G,F1]
+
+WIDTH = 524;
+HEIGHT = 900;
+frameCount =0;
+var TilesList = {};
+var Xpos = [0,132,263,392];
+var TC=0;
+var GameOver = false;
+
+
+Tiles = function(name,x,y,spdY,width,height,color,clicked,sound) {
+var Tile={
+ x:x,
+ y:y,
+ spdY:spdY,
+ name:name,
+ width:width,
+ height:height,
+ color:color,
+ clicked:clicked,
+ sound:sound,
+ };
+ 
+ TilesList[name]=Tile;
+}
+
+randomlyGenerateTiles =function(){
+   var Val = Math.floor(Math.random()*4);
+   var x= Xpos[Val];
+   var y= HEIGHT;
+   var height= 150;
+   var width= 132;
+   var name= NumberOfTiles;
+   var spdY=2;
+   var color = "black";
+   var sound = PlaySound[NumberOfTiles];
+   Tiles(name,x,y,spdY,width,height,color,false,sound);
+   NumberOfTiles++;
+}
+
+
+Update = function(){
+  frameCount++;
+  
+  if (GameOver==true){
+    return;
+  }
+  
+  ctx.clearRect(0,0,WIDTH,HEIGHT);
+  
+  if (frameCount%100==0 && NumberOfTiles <25){
+      arryGen.push(x);
+	  randomlyGenerateTiles();
+	  x++;
+	}
+	
+  
+  for (i in TilesList){
+    UpdateEntity(TilesList[i]);
+	var GoCheck = GoChecker(TilesList[i]);
+
+	if (GoCheck){
+	  if (missNum!=null){
+	    TilesList[missNum].color="red";
+		Draw(TilesList[i]);
+	  }else{
+	    TilesList[i].color="red";
+	    Draw(TilesList[i]);
+	  }
+		
+	   
+	 GameOver = true;
+	}
+	
+	var Passed = CheckPass(TilesList[i]);
+	
+	if (Passed){
+	  delete TilesList[i];
+	}
+  }
+}
+
+UpdateEntity = function(entity){
+	entity.y -= entity.spdY;	
+	Draw(entity);
+
+}
+
+Draw = function(entity){
+    ctx.save();
+	ctx.fillStyle = entity.color;
+	ctx.fillRect(entity.x,entity.y,entity.width,entity.height);
+	ctx.restore();
+}
+
+function getMousePos(canvas, event) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+    };
+}
+
+function isInside(pos, rect){
+    return pos.x > rect.x && pos.x < rect.x+rect.width && pos.y < rect.y+rect.height && pos.y > rect.y
+}
+
+missChecker = function(){
+  for (var i=0 ; i<arryCheck.length; i++){
+     if (arryCheck[i] != arryGen[i]){
+		missNum = arryCheck[i];
+		return true;
+	 }
+	}
+
+}
+
+can.addEventListener('click', function(event) {
+    
+	var mousePos = getMousePos(can, event);
+
+	for (i in TilesList){    
+		
+		if (isInside(mousePos,TilesList[i])) {
+			TilesList[i].color="grey";
+			TilesList[i].clicked =true;
+			var name = TilesList[i].name;
+			arryCheck.push(name);
+			TilesList[i].sound.play();
+		} 
+	}
+
+}, false);
+
+CheckPass = function(entity) {
+ if (entity.y<-150){
+	 return true;
+	}
+}
+
+GoChecker = function(entity) {
+    if (entity.y<0 && entity.clicked == false){
+	 return true;
+	 }
+	 
+	var missCheck = missChecker()
+	
+	if (missCheck){
+	   return true;
+	}
+	 
+}
+
+setInterval(Update,5);
+</script>
+
+
